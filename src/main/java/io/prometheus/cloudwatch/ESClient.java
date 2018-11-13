@@ -52,8 +52,12 @@ public class ESClient {
     public static Map<String, String> findTagsForResource(String fieldName, String fieldValue, String esPath, List<String> additionalLabels) {
         Map<String, String> tags = defaultEmptyTags(TAG_NAMES, additionalLabels);
         Unirest.setHttpClient(makeClient());
-
-        String sb = buildQuery(fieldName.toLowerCase(), fieldValue);
+        String updatedfieldValue = fieldValue;
+        String elasticache = "aws/elasticache";
+        if(esPath.equals(elasticache)) {
+              updatedfieldValue = RemoveNumbers(fieldValue);
+        }
+        String sb = buildQuery(fieldName.toLowerCase(), updatedfieldValue);
         JsonNode node;
         try {
         	LOGGER.info("## Connecting to ES " + fieldValue + " " + fieldName);
@@ -62,10 +66,12 @@ public class ESClient {
         } catch (UnirestException e) {
             // TODO Log Error
         	LOGGER.warning("Error connecting to Pacman API: " + e.getMessage());
+                LOGGER.info("Inside Catch due to error" + e.getMessage());
             return tags;
         }
         int totalResults = node.getObject().getJSONObject("hits").getInt("total");
-        LOGGER.fine("fieldName: " + fieldName + " fieldValue: " + fieldValue + " esPath: " +esPath);
+        LOGGER.info("TotalResults=" + totalResults + "FieldName=" + fieldName + "FieldValue" + fieldValue + "updatedfieldvalue=" + updatedfieldValue);
+        //LOGGER.fine("fieldName: " + fieldName + " fieldValue: " + fieldValue + " esPath: " +esPath);
         if (totalResults == 1) {
             JSONObject source = node.getObject().getJSONObject("hits").getJSONArray("hits").getJSONObject(0).getJSONObject("_source");
             // Tag names are case sensitive
@@ -79,6 +85,7 @@ public class ESClient {
         } else {
             // TODO: error
         }
+        //LOGGER.info(tags);
         return tags;
     }
 
@@ -115,6 +122,20 @@ public class ESClient {
 
     private static String buildQuery(String fieldName, String fieldValue) {
         return "{\"size\":\"2\",\"query\":{\"bool\":{\"must\":[{\"term\":{\"" + fieldName + ".keyword\":\"" + fieldValue + "\"}},{\"match\":{\"latest\":true}}]}}}";
+    }
+
+    private static String RemoveNumbers(String fieldValue) {
+        while(fieldValue.matches("^.+?\\d$")) {
+          if (null != fieldValue && fieldValue.length() > 0 ) {
+              int endIndex = fieldValue.lastIndexOf("-");
+              if (endIndex != -1)  
+              {
+                  String newstr = fieldValue.substring(0, endIndex);
+                  fieldValue = newstr;
+              }
+          }
+        }
+    return fieldValue;
     }
 
     public static HttpClient makeClient() {
