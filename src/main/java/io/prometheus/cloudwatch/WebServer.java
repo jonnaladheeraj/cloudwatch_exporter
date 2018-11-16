@@ -24,6 +24,7 @@ public class WebServer {
 
     private static final String CONFIG_FILE = "CONFIG_FILE";
     private static final String CONSUL_SERVERS = "CONSUL_SERVERS";
+    private static final String RESOURCE_TYPE = "RESOURCE_TYPE";
     public static String REQUEST_TEMPLATE =
             "{" + 
             "   \"ID\": \"CloudWatchExporter-{HOST}-{PORT}\"," + 
@@ -41,7 +42,7 @@ public class WebServer {
             "   }" + 
             "}";
     public static String configFilePath;
-
+    public static String resourceType;
     public static void main(String[] args) throws Exception {
         
         String configFile = System.getenv(CONFIG_FILE);
@@ -62,6 +63,15 @@ public class WebServer {
         String consulServers = System.getenv(CONSUL_SERVERS);
         if (consulServers != null) {
             registerOnConsul(consulServers);
+        }
+        
+        // get resource type
+        String resourceTypeValue = System.getenv(RESOURCE_TYPE);
+        if (resourceTypeValue != null) {
+           resourceType = resourceTypeValue;
+        }
+        else {
+          resourceType = "UNTAGGED";
         }
 
         

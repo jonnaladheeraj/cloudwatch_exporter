@@ -51,6 +51,9 @@ public class ESClient {
 
     public static Map<String, String> findTagsForResource(String fieldName, String fieldValue, String esPath, List<String> additionalLabels) {
         Map<String, String> tags = defaultEmptyTags(TAG_NAMES, additionalLabels);
+        tags.put("Resource_type", WebServer.resourceType);
+        LOGGER.info(" Resource type is : " + WebServer.resourceType);
+        LOGGER.info("FieldName: " + fieldName + "   FieldValue: " + fieldValue);
         Unirest.setHttpClient(makeClient());
         String updatedfieldValue = fieldValue;
         String elasticache = "aws/elasticache";
@@ -125,7 +128,7 @@ public class ESClient {
     }
 
     private static String RemoveNumbers(String fieldValue) {
-        while(fieldValue.matches("^.+?\\d$")) {
+        while(fieldValue.matches("^.+?-\\d{1,5}$")) {
           if (null != fieldValue && fieldValue.length() > 0 ) {
               int endIndex = fieldValue.lastIndexOf("-");
               if (endIndex != -1)  
